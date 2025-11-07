@@ -1,0 +1,20 @@
+Alteryx cannot display pop-ups, but it can execute batch jobs 
+and send emails.
+So it is sufficient if we receive an email
+indicating whether the job has been completed.
+
+We plan to run the batch at 11:00 and 11:50.
+When the 11:00 batch runs,
+if there is an issue with the files (for example, 
+a missing pair or mismatched content), 
+the email should indicate what the problem is.
+
+The process compares files in two folders using Python and Alteryx,
+checking whether the corresponding (paired) files exist and 
+whether their contents match.
+
+
+, let’s proceed like this. I appreciate your support.
+Looking forward to the results
+
+let's go right into the details."
