@@ -1,0 +1,52 @@
+Sub CountKofrSimple_FromSheet()
+
+    Dim wb As Workbook, ws As Worksheet
+    Dim macroWS As Worksheet
+    Dim filePath As String
+    Dim sheetName As String
+    Dim targetD As String
+    
+    Dim lastRow As Long, i As Long, cnt As Long
+
+    ' 경로/조건이 적혀있는 시트 지정
+    Set macroWS = ThisWorkbook.Worksheets("Macro")
+
+    ' A10에 파일 경로가 있다고 가정
+    filePath = macroWS.Range("A10").Value
+    
+    If filePath = "" Then
+        MsgBox "Macro 시트 A10에 파일 경로가 없습니다.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' 시트명과 조건값도 시트에서 가져오고 싶다면 아래처럼 가능
+    sheetName = macroWS.Range("B10").Value   ' 예: B10에 시트명
+    targetD = macroWS.Range("C10").Value     ' 예: C10에 필터할 D값
+    
+    If sheetName = "" Then sheetName = "Sheet1"  ' 기본값
+    
+    If targetD = "" Then
+        MsgBox "C10에 D열 기준값을 입력하세요.", vbExclamation
+        Exit Sub
+    End If
+
+    ' 파일 열기
+    Set wb = Workbooks.Open(filePath, ReadOnly:=True)
+    Set ws = wb.Worksheets(sheetName)
+
+    lastRow = ws.Cells(ws.Rows.Count, "D").End(xlUp).Row
+
+    cnt = 0
+    For i = 2 To lastRow   ' 1행 = 헤더 가정
+        If ws.Cells(i, "D").Value = targetD Then
+            If InStr(1, ws.Cells(i, "F").Value, "kofr", vbTextCompare) > 0 Then
+                cnt = cnt + 1
+            End If
+        End If
+    Next i
+
+    MsgBox "D열=" & targetD & " 조건 중 F열에 'kofr' 포함된 개수: " & cnt, vbInformation
+
+    wb.Close SaveChanges:=False
+
+End Sub
