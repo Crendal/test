@@ -1,0 +1,63 @@
+Sub Simple_KoreaExchange_IRS()
+
+    Dim wsMacro As Worksheet, wsPos As Worksheet
+    Dim wbData As Workbook, wsSrc As Worksheet
+    Dim filePath As String
+    Dim lastRow As Long, lastPos As Long
+    Dim i As Long, dst As Long
+    Dim ah As String, ap As String
+    Dim cdCount As Long, kofrCount As Long
+    
+    ' 매크로/Pos 시트 객체
+    Set wsMacro = ThisWorkbook.Worksheets("Macro")
+    Set wsPos = ThisWorkbook.Worksheets("Pos")
+    
+    ' 1단계: 외부 파일에서 Korea Exchange + IRS만 Pos에 복사
+    filePath = wsMacro.Range("E5").Value          ' 전체 경로
+    
+    Set wbData = Workbooks.Open(filePath, ReadOnly:=True)
+    Set wsSrc = wbData.Worksheets("Sheet1")
+    
+    ' Pos 시트 초기화 후 헤더 복사
+    wsPos.Cells.Clear
+    wsSrc.Rows(1).Copy wsPos.Rows(1)
+    
+    lastRow = wsSrc.Cells(wsSrc.Rows.Count, "E").End(xlUp).Row
+    dst = 2
+    
+    For i = 2 To lastRow
+        If wsSrc.Cells(i, "E").Value = "Korea Exchange" _
+           And wsSrc.Cells(i, "F").Value = "IRS" Then
+           
+            wsSrc.Rows(i).Copy wsPos.Rows(dst)
+            dst = dst + 1
+        End If
+    Next i
+    
+    wbData.Close SaveChanges:=False
+    
+    ' 2단계: Pos의 AH/AP에서 CD, KOFR 포함 행 개수 세기
+    lastPos = wsPos.Cells(wsPos.Rows.Count, "A").End(xlUp).Row
+    cdCount = 0
+    kofrCount = 0
+    
+    For i = 2 To lastPos
+        ah = UCase(wsPos.Cells(i, "AH").Value)
+        ap = UCase(wsPos.Cells(i, "AP").Value)
+        
+        ' CD 포함 여부 (둘 중 하나라도 포함되면 카운트)
+        If InStr(ah, "CD") > 0 Or InStr(ap, "CD") > 0 Then
+            cdCount = cdCount + 1
+        End If
+        
+        ' KOFR 포함 여부 (둘 중 하나라도 포함되면 카운트)
+        If InStr(ah, "KOFR") > 0 Or InStr(ap, "KOFR") > 0 Then
+            kofrCount = kofrCount + 1
+        End If
+    Next i
+    
+    ' Macro 시트에 결과 쓰기
+    wsMacro.Range("E12").Value = cdCount
+    wsMacro.Range("E13").Value = kofrCount
+
+End Sub
