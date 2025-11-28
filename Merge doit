@@ -1,0 +1,59 @@
+Sub MergeTo결제()
+
+    Dim fd As FileDialog
+    Dim i As Long
+    Dim wb As Workbook
+    Dim wsSrc As Worksheet
+    Dim wsDst As Worksheet
+    Dim lastRowSrc As Long
+    Dim lastColSrc As Long
+    Dim nextRowDst As Long
+
+    ' 붙여넣을 시트 (현재 매크로가 있는 통합문서의 "결제" 시트)
+    Set wsDst = ThisWorkbook.Worksheets("결제")
+    
+    ' "결제" 시트의 다음 입력 위치: 2행부터 시작
+    nextRowDst = 2
+
+    ' 파일 선택 창 열기
+    Set fd = Application.FileDialog(msoFileDialogFilePicker)
+    With fd
+        .AllowMultiSelect = True
+        .Title = "가져올 엑셀 파일들을 모두 선택하세요"
+        .Filters.Clear
+        .Filters.Add "Excel Files", "*.xlsx;*.xlsm;*.xls"
+        If .Show <> -1 Then Exit Sub   ' 취소하면 종료
+    End With
+
+    Application.ScreenUpdating = False
+
+    ' 선택한 파일들을 순서대로 반복
+    For i = 1 To fd.SelectedItems.Count
+        
+        ' 파일 열기
+        Set wb = Workbooks.Open(fd.SelectedItems(i))
+        Set wsSrc = wb.Worksheets(1)   ' 각 파일의 첫 번째 시트
+        
+        ' 소스 시트의 마지막 행/열 찾기
+        lastRowSrc = wsSrc.Cells(wsSrc.Rows.Count, 1).End(xlUp).Row
+        lastColSrc = wsSrc.Cells(1, wsSrc.Columns.Count).End(xlToLeft).Column
+        
+        ' 2행부터 데이터가 있는 경우에만 복사
+        If lastRowSrc >= 2 Then
+            ' 소스: 2행 ~ 마지막 행, 1열 ~ 마지막 열
+            wsSrc.Range(wsSrc.Cells(2, 1), wsSrc.Cells(lastRowSrc, lastColSrc)).Copy _
+                wsDst.Cells(nextRowDst, 1)
+            
+            ' 다음 붙여넣을 행 갱신
+            nextRowDst = wsDst.Cells(wsDst.Rows.Count, 1).End(xlUp).Row + 1
+        End If
+        
+        ' 원본 파일 저장 없이 닫기
+        wb.Close SaveChanges:=False
+    Next i
+
+    Application.ScreenUpdating = True
+
+    MsgBox "모든 파일 병합이 완료되었습니다."
+
+End Sub
