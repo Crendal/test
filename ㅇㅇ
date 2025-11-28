@@ -1,0 +1,48 @@
+Sub Merge()
+    Dim fd As FileDialog, f, A(), i As Long, j As Long
+    Dim wb As Workbook, r As Long
+    Dim temp As String, t2 As Long
+    Dim ur As Range
+    
+    Set fd = Application.FileDialog(msoFileDialogFilePicker)
+    fd.AllowMultiSelect = True
+    If fd.Show <> -1 Then Exit Sub
+
+    ' 선택한 파일 경로 + 정렬용 숫자 배열
+    ReDim A(1 To fd.SelectedItems.Count, 1 To 2)
+    For i = 1 To UBound(A)
+        A(i, 1) = fd.SelectedItems(i)
+        A(i, 2) = CLng(Right(fd.SelectedItems(i), 8))   ' 파일명 끝 8자리 숫자로 정렬하는 로직 그대로 사용
+    Next
+
+    ' 정렬
+    For i = 1 To UBound(A) - 1
+        For j = i + 1 To UBound(A)
+            If A(i, 2) > A(j, 2) Then
+                temp = A(i, 1): A(i, 1) = A(j, 1): A(j, 1) = temp
+                t2 = A(i, 2): A(i, 2) = A(j, 2): A(j, 2) = t2
+            End If
+        Next j
+    Next i
+
+    ' 병합 시트의 시작 행: 2행부터 (1행은 헤더용으로 비워둠 또는 이미 존재한다고 가정)
+    r = 2
+
+    For i = 1 To UBound(A)
+        Set wb = Workbooks.Open(A(i, 1))
+
+        With wb.Sheets(1)
+            Set ur = .UsedRange       ' 사용 영역
+            If ur.Rows.Count > 1 Then
+                ' 각 파일의 2번째 행부터 끝 행까지 복사
+                ur.Offset(1).Resize(ur.Rows.Count - 1).Copy _
+                    ThisWorkbook.Sheets(1).Cells(r, 1)
+                
+                ' 다음 붙여넣을 행 갱신
+                r = ThisWorkbook.Sheets(1).Cells(ThisWorkbook.Sheets(1).Rows.Count, 1).End(xlUp).Row + 1
+            End If
+        End With
+        
+        wb.Close False
+    Next i
+End Sub
